@@ -19,6 +19,7 @@ package org.vertx.java.core.http;
  * @author <a href="mailto:nmaurer@redhat.com">Norman Maurer</a>
  */
 public final class HttpHeaders {
+
   public static final CharSequence ACCEPT = io.netty.handler.codec.http.HttpHeaders.Names.ACCEPT;
   public static final CharSequence ACCEPT_CHARSET = io.netty.handler.codec.http.HttpHeaders.Names.ACCEPT_CHARSET;
   public static final CharSequence ACCEPT_ENCODING = io.netty.handler.codec.http.HttpHeaders.Names.ACCEPT_ENCODING;
@@ -68,6 +69,11 @@ public final class HttpHeaders {
   public static final CharSequence TRANSFER_ENCODING = io.netty.handler.codec.http.HttpHeaders.Names.TRANSFER_ENCODING;
   public static final CharSequence UPGRADE = io.netty.handler.codec.http.HttpHeaders.Names.UPGRADE;
   public static final CharSequence USER_AGENT = io.netty.handler.codec.http.HttpHeaders.Names.USER_AGENT;
+
+
+  public CharSequence createOptimized(String value) {
+    return io.netty.handler.codec.http.HttpHeaders.newEntity(value);
+  }
 
   private HttpHeaders() {
   }
