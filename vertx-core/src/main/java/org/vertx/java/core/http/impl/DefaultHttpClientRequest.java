@@ -250,6 +250,20 @@ public class DefaultHttpClientRequest implements HttpClientRequest {
     return this;
   }
 
+  @Override
+  public HttpClientRequest putHeader(CharSequence name, CharSequence value) {
+    check();
+    headers().set(name, value);
+    return this;
+  }
+
+  @Override
+  public HttpClientRequest putHeader(CharSequence name, Iterable<CharSequence> values) {
+    check();
+    headers().set(name, values);
+    return this;
+  }
+
   // Data has been received on the response
   void dataReceived() {
     if (currentTimeoutTimerId != -1) {

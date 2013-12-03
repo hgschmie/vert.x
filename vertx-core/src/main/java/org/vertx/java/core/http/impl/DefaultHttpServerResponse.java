@@ -163,6 +163,34 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
   }
 
   @Override
+  public HttpServerResponse putHeader(CharSequence name, CharSequence value) {
+    checkWritten();
+    headers().set(name, value);
+    return this;
+  }
+
+  @Override
+  public HttpServerResponse putHeader(CharSequence name, Iterable<CharSequence> values) {
+    checkWritten();
+    headers().set(name, values);
+    return this;
+  }
+
+  @Override
+  public HttpServerResponse putTrailer(CharSequence name, CharSequence value) {
+    checkWritten();
+    trailers().set(name, value);
+    return this;
+  }
+
+  @Override
+  public HttpServerResponse putTrailer(CharSequence name, Iterable<CharSequence> value) {
+    checkWritten();
+    trailers().set(name, value);
+    return this;
+  }
+
+  @Override
   public HttpServerResponse setWriteQueueMaxSize(int size) {
     checkWritten();
     conn.doSetWriteQueueMaxSize(size);
