@@ -71,7 +71,7 @@ public final class HttpHeaders {
   public static final CharSequence USER_AGENT = io.netty.handler.codec.http.HttpHeaders.Names.USER_AGENT;
 
 
-  public CharSequence createOptimized(String value) {
+  public static CharSequence createOptimized(String value) {
     return io.netty.handler.codec.http.HttpHeaders.newEntity(value);
   }
 
