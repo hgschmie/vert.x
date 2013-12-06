@@ -49,8 +49,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -76,8 +74,9 @@ public class DefaultHttpServer implements HttpServer, Closeable {
   private final DefaultContext actualCtx;
   private Handler<HttpServerRequest> requestHandler;
   private Handler<ServerWebSocket> wsHandler;
-  final Map<Channel, ServerConnection> connectionMap = new ConcurrentHashMap<>();
   private ChannelGroup serverChannelGroup;
+  private ChannelGroup group;
+
   private boolean listening;
   private String serverOrigin;
   private boolean compressionSupported;
@@ -157,6 +156,7 @@ public class DefaultHttpServer implements HttpServer, Closeable {
       DefaultHttpServer shared = vertx.sharedHttpServers().get(id);
       if (shared == null) {
         serverChannelGroup = new DefaultChannelGroup("vertx-acceptor-channels", GlobalEventExecutor.INSTANCE);
+        group = new DefaultChannelGroup("vertx-channels", GlobalEventExecutor.INSTANCE);
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(availableWorkers);
         bootstrap.channel(NioServerSocketChannel.class);
@@ -525,8 +525,11 @@ public class DefaultHttpServer implements HttpServer, Closeable {
       vertx.sharedHttpServers().remove(id);
     }
 
-    for (ServerConnection conn : connectionMap.values()) {
-      conn.close();
+    for (Channel sock : group) {
+      ConnectionBase conn = sock.attr(VertxHandler.KEY).get();
+      if (conn != null) {
+        conn.close();
+      }
     }
 
     // We need to reset it since sock.internalClose() above can call into the close handlers of sockets on the same thread
@@ -572,7 +575,7 @@ public class DefaultHttpServer implements HttpServer, Closeable {
     private boolean closeFrameSent;
 
     public ServerHandler() {
-      super(vertx, DefaultHttpServer.this.connectionMap);
+      super(vertx);
     }
 
     private void sendError(CharSequence err, HttpResponseStatus status, Channel ch) {
@@ -636,7 +639,8 @@ public class DefaultHttpServer implements HttpServer, Closeable {
             if (reqHandler != null) {
               conn = new ServerConnection(DefaultHttpServer.this, ch, reqHandler.context, serverOrigin);
               conn.requestHandler(reqHandler.handler);
-              connectionMap.put(ch, conn);
+              ch.attr(VertxHandler.KEY).set(conn);
+              group.add(ch);
               conn.handleMessage(msg);
             }
           } else {
@@ -725,7 +729,8 @@ public class DefaultHttpServer implements HttpServer, Closeable {
 
         Runnable connectRunnable = new Runnable() {
           public void run() {
-            connectionMap.put(ch, wsConn);
+            ch.attr(VertxHandler.KEY).set(wsConn);
+            group.add(ch);
             try {
               shake.handshake(ch, request);
             } catch (Exception e) {

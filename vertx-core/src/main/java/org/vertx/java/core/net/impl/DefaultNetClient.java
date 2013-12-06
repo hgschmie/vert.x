@@ -18,11 +18,14 @@ package org.vertx.java.core.net.impl;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.impl.*;
@@ -33,8 +36,6 @@ import org.vertx.java.core.net.NetSocket;
 
 import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -43,12 +44,12 @@ public class DefaultNetClient implements NetClient {
 
   private static final Logger log = LoggerFactory.getLogger(DefaultNetClient.class);
   private static final ExceptionDispatchHandler EXCEPTION_DISPATCH_HANDLER = new ExceptionDispatchHandler();
+  private ChannelGroup group;
 
   private final VertxInternal vertx;
   private final DefaultContext actualCtx;
   private final TCPSSLHelper tcpHelper = new TCPSSLHelper();
   private Bootstrap bootstrap;
-  private final Map<Channel, DefaultNetSocket> socketMap = new ConcurrentHashMap<>();
   private int reconnectAttempts;
   private long reconnectInterval = 1000;
   private boolean configurable = true;
@@ -80,8 +81,13 @@ public class DefaultNetClient implements NetClient {
 
   @Override
   public void close() {
-    for (NetSocket sock : socketMap.values()) {
-      sock.close();
+    if (group != null) {
+      for (Channel sock : group) {
+        ConnectionBase conn = sock.attr(VertxHandler.KEY).get();
+        if (conn != null) {
+          conn.close();
+        }
+      }
     }
     actualCtx.removeCloseHook(closeHook);
   }
@@ -306,6 +312,7 @@ public class DefaultNetClient implements NetClient {
                        final int remainingAttempts) {
     if (bootstrap == null) {
       tcpHelper.checkSSL(vertx);
+      group = new DefaultChannelGroup("vertx-channels", GlobalEventExecutor.INSTANCE);
 
       bootstrap = new Bootstrap();
       bootstrap.group(actualCtx.getEventLoop());
@@ -325,7 +332,7 @@ public class DefaultNetClient implements NetClient {
             // only add ChunkedWriteHandler when SSL is enabled otherwise it is not needed as FileRegion is used.
             pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());       // For large file / sendfile support
           }
-          pipeline.addLast("handler", new VertxNetHandler(vertx, socketMap));
+          pipeline.addLast("handler", new VertxNetHandler(vertx));
         }
       });
       configurable = false;
@@ -389,7 +396,8 @@ public class DefaultNetClient implements NetClient {
 
   private void doConnected(Channel ch, final Handler<AsyncResult<NetSocket>> connectHandler) {
     DefaultNetSocket sock = new DefaultNetSocket(vertx, ch, actualCtx);
-    socketMap.put(ch, sock);
+    ch.attr(VertxHandler.KEY).set(sock);
+    group.add(ch);
     connectHandler.handle(new DefaultFutureResult<NetSocket>(sock));
   }
 
