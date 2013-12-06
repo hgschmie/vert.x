@@ -53,10 +53,6 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
   private final HttpResponse response;
   private final HttpVersion version;
   private final boolean keepAlive;
-
-  private int statusCode = 200;
-  private String statusMessage = null;
-
   private boolean headWritten;
   private boolean written;
   private Handler<Void> drainHandler;
@@ -99,23 +95,23 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
 
   @Override
   public int getStatusCode() {
-    return statusCode;
+    return response.getStatus().code();
   }
 
   @Override
   public HttpServerResponse setStatusCode(int statusCode) {
-    this.statusCode = statusCode;
+    this.response.setStatus(HttpResponseStatus.valueOf(statusCode));
     return this;
   }
 
   @Override
   public String getStatusMessage() {
-    return statusMessage;
+    return response.getStatus().reasonPhrase();
   }
 
   @Override
   public HttpServerResponse setStatusMessage(String statusMessage) {
-    this.statusMessage = statusMessage;
+    this.response.setStatus(new HttpResponseStatus(response.getStatus().code(), statusMessage));
     return this;
   }
 
@@ -347,7 +343,7 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
     File file = new File(PathAdjuster.adjust(vertx, filename));
     if (!file.exists()) {
       if (notFoundResource != null) {
-        statusCode = HttpResponseStatus.NOT_FOUND.code();
+        setStatusCode(HttpResponseStatus.NOT_FOUND.code());
         sendFile(notFoundResource, (String)null, resultHandler);
       } else {
         sendNotFound();
@@ -426,7 +422,7 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
   }
 
   private void sendNotFound() {
-    statusCode = HttpResponseStatus.NOT_FOUND.code();
+    setStatusCode(HttpResponseStatus.NOT_FOUND.code());
     putHeader("Content-Type", "text/html");
     end(NOT_FOUND);
   }
@@ -456,18 +452,6 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
   }
 
   private void prepareHeaders() {
-    HttpResponseStatus status;
-    if (statusCode == HttpResponseStatus.OK.code() && statusMessage == null) {
-      status = HttpResponseStatus.OK;
-    } else {
-      if (statusMessage == null) {
-        status = HttpResponseStatus.valueOf(statusCode);
-      } else {
-        // this is the most expensive way so do it as last resort
-        status = new HttpResponseStatus(statusCode, statusMessage);
-      }
-    }
-    response.setStatus(status);
     if (version == HttpVersion.HTTP_1_0 && keepAlive) {
       response.headers().set(CONNECTION, KEEP_ALIVE);
     }
