@@ -43,7 +43,6 @@ import java.net.InetSocketAddress;
 public class DefaultNetClient implements NetClient {
 
   private static final Logger log = LoggerFactory.getLogger(DefaultNetClient.class);
-  private static final ExceptionDispatchHandler EXCEPTION_DISPATCH_HANDLER = new ExceptionDispatchHandler();
   private ChannelGroup group;
 
   private final VertxInternal vertx;
@@ -321,8 +320,6 @@ public class DefaultNetClient implements NetClient {
         @Override
         protected void initChannel(Channel ch) throws Exception {
           ChannelPipeline pipeline = ch.pipeline();
-          pipeline.addLast("exceptionDispatcher", EXCEPTION_DISPATCH_HANDLER);
-
           if (tcpHelper.isSSL()) {
             SSLEngine engine = tcpHelper.getSSLContext().createSSLEngine();
             engine.setUseClientMode(true); //We are on the client side of the connection
