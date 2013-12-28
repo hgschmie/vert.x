@@ -26,6 +26,11 @@
     <dep.hazelcast.version>2.6.3</dep.hazelcast.version>
   </properties>
 
+  <organization>
+    <name>Vertx (see http://vertx.io/)</name>
+    <url>http://vertx.io/</url>
+  </organization>
+
   <modules>
     <module>vertx-core</module>
     <module>vertx-hazelcast</module>
@@ -91,6 +96,27 @@
   </dependencyManagement>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>1.5</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.skife.maven</groupId>
+          <artifactId>really-executable-jar-maven-plugin</artifactId>
+          <version>1.0.5</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>buildnumber-maven-plugin</artifactId>
+          <version>1.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -99,6 +125,7 @@
           <configLocation>src/main/resources/checkstyle.xml</configLocation>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
