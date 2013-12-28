@@ -16,6 +16,8 @@
 
   <properties>
     <basepom.check.skip-license>true</basepom.check.skip-license>
+    <basepom.check.fail-findbugs>false</basepom.check.fail-findbugs>
+    <basepom.check.fail-pmd>false</basepom.check.fail-pmd>
 
     <basepom.test.fork-count>1</basepom.test.fork-count>
     <basepom.test.reuse-vm>false</basepom.test.reuse-vm>
