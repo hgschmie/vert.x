@@ -102,16 +102,9 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.kitei.internal</groupId>
-            <artifactId>kitei-rules</artifactId>
-            <version>1</version>
-          </dependency>
-        </dependencies>
         <configuration>
           <rulesets>
-            <ruleset>pmd/kitei.xml</ruleset>
+            <ruleset>../src/main/resources/pmd.xml</ruleset>
           </rulesets>
         </configuration>
       </plugin>
