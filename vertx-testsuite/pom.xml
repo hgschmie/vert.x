@@ -82,13 +82,13 @@
             </goals>
             <configuration>
               <outputDirectory>${basedir}/target/mod-test</outputDirectory>
-              <resources>          
+              <resources>
                 <resource>
                   <directory>src/test/mod-test</directory>
                   <filtering>false</filtering>
                 </resource>
-              </resources>              
-            </configuration>     
+              </resources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -96,7 +96,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <argLine>${argLine} -Dfile.encoding=${project.build.sourceEncoding} -Xms128m -Xmx1024m -XX:MaxPermSize=128m -XX:NewRatio=2</argLine>
           <systemPropertyVariables children.combine="append">
+            <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
             <vertx.test.timeout>60</vertx.test.timeout>
             <vertx.mods>${basedir}/target/mod-test</vertx.mods>
             <vertx.clusterManagerFactory>org.vertx.java.spi.cluster.impl.hazelcast.HazelcastClusterManagerFactory</vertx.clusterManagerFactory>
